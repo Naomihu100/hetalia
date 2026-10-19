@@ -66,9 +66,9 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 /*
-  使用演示 GeoJSON（含国家名称）。如果未来需要离线、加速或更精确的属性，请换成其它 GeoJSON 文件。
+  使用本地 GeoJSON（含国家名称）。如果未来需要替换为更小的 TopoJSON，可在 assets/maps/ 里替换并更新代码。
 */
-const geojsonUrl = 'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json';
+const geojsonUrl = 'assets/maps/countries.geo.json';
 
 /*
   artworkData：把你的画作按国家代码或国家名挂到这里。
@@ -137,7 +137,7 @@ function renderMap(){
            showArtworksForCountry(d);
         });
   }).catch(err => {
-    document.getElementById('countryInfo').innerHTML = '<p class="no-art">地图加载失败，请检查网络或替换 GeoJSON URL。</p>';
+    document.getElementById('countryInfo').innerHTML = '<p class="no-art">地图加载失败，请检查网络或替换 GeoJSON 文件。</p>';
     console.error(err);
   });
 }
