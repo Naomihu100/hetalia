@@ -26,24 +26,9 @@
     color: var(--text);
   }
 
-  #container {
-    display:flex;
-    height:100vh;
-    width:100%;
-  }
-
-  #map {
-    flex: 1;
-    min-width: 0;
-    position: relative;
-    background: linear-gradient(180deg, #f7fbff 0%, #edf5ff 100%);
-  }
-
-  svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
+  #container { display:flex; height:100vh; width:100%; }
+  #map { flex: 1; min-width: 0; position: relative; background: linear-gradient(180deg, #f7fbff 0%, #edf5ff 100%); }
+  svg { width:100%; height:100%; display:block; }
 
   .country {
     fill: var(--map-fill);
@@ -52,7 +37,6 @@
     cursor: pointer;
     transition: fill 0.15s ease;
   }
-
   .country:hover { fill: var(--map-hover); }
   .country.selected { fill: var(--map-selected); }
 
@@ -61,11 +45,10 @@
     max-width: 42vw;
     background: var(--panel);
     border-left: 1px solid var(--line);
-    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.04);
+    box-shadow: -4px 0 12px rgba(0,0,0,0.04);
     padding: 16px;
     overflow: auto;
   }
-
   .sidebar-header {
     display:flex;
     justify-content:space-between;
@@ -73,11 +56,7 @@
     gap:8px;
     margin-bottom: 12px;
   }
-
-  #sidebar h2 {
-    margin: 0;
-    font-size: 1.05rem;
-  }
+  #sidebar h2 { margin:0; font-size: 1.05rem; }
 
   .btn-close, .mini-link {
     background: #eef2f7;
@@ -88,7 +67,6 @@
     cursor: pointer;
     font: inherit;
   }
-
   .btn-close:hover, .mini-link:hover { background: #e4ebf5; }
 
   .no-art {
@@ -97,24 +75,14 @@
     margin: 0;
   }
 
-  .country-title {
-    font-size: 1.1rem;
-    margin: 0 0 8px;
-  }
-
-  .art-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
+  .country-title { font-size: 1.1rem; margin: 0 0 8px; }
+  .art-list { display:flex; flex-direction:column; gap:12px; }
   .art-item {
-    display: flex;
-    gap: 12px;
+    display:flex;
+    gap:12px;
     padding: 8px 0;
     border-bottom: 1px solid #eef2f7;
   }
-
   .thumb {
     width: 96px;
     height: 72px;
@@ -124,42 +92,26 @@
     border: 1px solid #e5e7eb;
     flex-shrink: 0;
   }
-
-  .art-meta {
-    flex: 1;
-    min-width: 0;
-  }
-
+  .art-meta { flex: 1; min-width: 0; }
   .wiki-link {
     color: var(--link);
     text-decoration: underline;
     cursor: pointer;
     font-weight: 600;
   }
-
-  .wiki-link:hover {
-    color: var(--link-hover);
-  }
-
+  .wiki-link:hover { color: var(--link-hover); }
   .art-year {
     color: var(--muted);
     font-size: 0.8rem;
     margin-top: 4px;
   }
-
   .art-desc {
     color: var(--text);
     font-size: 0.9rem;
     line-height: 1.5;
     margin-top: 6px;
   }
-
-  .detail-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
+  .detail-container { display:flex; flex-direction:column; gap:10px; }
   .detail-header {
     display:flex;
     justify-content:space-between;
@@ -167,7 +119,6 @@
     gap:8px;
     margin-bottom: 8px;
   }
-
   .detail-image {
     width: 100%;
     max-height: 420px;
@@ -176,7 +127,6 @@
     background: #f8f9fb;
     border: 1px solid #edf1f5;
   }
-
   .detail-text {
     line-height: 1.7;
     color: var(--text);
@@ -205,7 +155,6 @@
     z-index:30;
     padding: 24px;
   }
-
   #modal .modal-inner {
     background:#fff;
     padding: 18px;
@@ -215,7 +164,6 @@
     overflow:auto;
     box-shadow: 0 18px 42px rgba(0,0,0,0.2);
   }
-
   #modal img {
     max-width:100%;
     height:auto;
@@ -258,53 +206,90 @@
 </div>
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <script>
-const geojsonUrl = 'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json';
+const geojsonUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+
+const numericCountryToIso2 = {
+  '156': 'CN',
+  '392': 'JP',
+  '250': 'FR',
+  '840': 'US',
+  '124': 'CA',
+  '276': 'DE',
+  '826': 'GB',
+  '380': 'IT',
+  '643': 'RU',
+  '356': 'IN',
+  '710': 'ZA',
+  '76': 'BR',
+  '484': 'MX',
+  '032': 'AR',
+  '036': 'AU',
+  '554': 'NZ',
+  '704': 'VN',
+  '764': 'TH',
+  '702': 'SG',
+  '360': 'ID',
+  '458': 'MY',
+  '608': 'PH',
+  '410': 'KR',
+  '804': 'UA',
+  '398': 'KZ',
+  '050': 'BD',
+  '344': 'HK',
+  '528': 'NL',
+  '724': 'ES',
+  '752': 'SE',
+  '203': 'CZ',
+  '756': 'CH'
+};
 
 const artworkData = {
   "CN": [
-    { title: "中国的记忆", url: "assets/art/China.png", year: 2026, desc: "这是一幅关于中国文化与记忆的创作，描绘了我对中国历史与精神世界的联想。" }
+    { title: "中国的记忆", url: "assets/art/China.png", year: 2026, desc: "0000" }
   ],
   "JP": [
-    { title: "富士山之梦", url: "https://picsum.photos/id/1011/1200/800", year: 2024, desc: "以日本为灵感的油画。" },
-    { title: "都市夜景", url: "https://picsum.photos/id/1025/1200/800", year: 2023, desc: "现代城市氛围。" }
+    { title: "富士山之梦", url: "https://picsum.photos/id/1011/1200/800", year: 2024, desc: "0000" },
+    { title: "都市夜景", url: "https://picsum.photos/id/1025/1200/800", year: 2023, desc: "0000" }
   ],
   "FR": [
-    { title: "巴黎光影", url: "https://picsum.photos/id/1003/1200/800", year: 2022, desc: "在法国创作的系列之一。" }
+    { title: "巴黎光影", url: "https://picsum.photos/id/1003/1200/800", year: 2022, desc: "0000" }
   ],
   "United States": [
-    { title: "大地之色", url: "https://picsum.photos/id/1015/1200/800", year: 2021, desc: "与美国有关的题材。" }
+    { title: "大地之色", url: "https://picsum.photos/id/1015/1200/800", year: 2021, desc: "0000" }
   ]
 };
 
 const width = Math.max(700, window.innerWidth * 0.6);
 const height = Math.max(400, window.innerHeight);
-
 const svg = d3.select("#map").append("svg")
   .attr("viewBox", `0 0 ${width} ${height}`)
   .attr("preserveAspectRatio", "xMidYMid meet");
-
 const tooltip = d3.select("#tooltip");
 const projection = d3.geoMercator()
   .scale((width / 2 / Math.PI) * 1.1)
   .translate([width / 2, height / 1.8]);
 const path = d3.geoPath().projection(projection);
 
+function getNumericIso2(d) {
+  const id = String(d && d.id || '');
+  return numericCountryToIso2[id] || null;
+}
+
 function getCountryKey(d) {
-  const props = d.properties || {};
-  const candidates = [props.iso_a2, props.ISO_A2, props.iso2, props.iso, props.ISO, props.ISO_A3, props.id, props.adm0_a3];
-  for (const c of candidates) {
-    if (c && typeof c === 'string' && c.trim().length > 0) return c.trim();
-  }
-  if (props.name) return props.name;
-  if (props.NAME) return props.NAME;
-  if (d.id) return d.id;
-  if (props.ADMIN) return props.ADMIN;
+  const iso2 = getNumericIso2(d);
+  if (iso2) return iso2;
+
+  const props = d && d.properties ? d.properties : {};
+  const name = props.name || props.NAME || props.ADMIN || '';
+  const normalized = name.trim();
+  if (normalized) return normalized;
   return null;
 }
 
 function getCountryDisplayName(d) {
-  const props = d.properties || {};
+  const props = d && d.properties ? d.properties : {};
   return props.name || props.NAME || props.ADMIN || getCountryKey(d) || '';
 }
 
@@ -315,9 +300,11 @@ function propNameToEnglish(name) {
 
 function renderMap() {
   d3.json(geojsonUrl).then(world => {
+    const countries = topojson.feature(world, world.objects.countries);
+
     svg.append("g")
       .selectAll("path")
-      .data(world.features)
+      .data(countries.features)
       .join("path")
         .attr("class", "country")
         .attr("d", path)
@@ -338,7 +325,7 @@ function renderMap() {
           showArtworksForCountry(d);
         });
   }).catch(err => {
-    document.getElementById('countryInfo').innerHTML = '<p class="no-art">地图加载失败，请检查网络或 GeoJSON 连接。</p>';
+    document.getElementById('countryInfo').innerHTML = '<p class="no-art">地图加载失败，请检查网络或 TopoJSON 连接。</p>';
     console.error(err);
   });
 }
