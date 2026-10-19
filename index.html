@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>按国家展示画作 — 示例</title>
+<style>
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+  #container { display:flex; height:100vh; }
+  #map { flex:1; position:relative; }
+  svg { width:100%; height:100%; display:block; }
+  .country { fill:#dcdcdc; stroke:#fff; stroke-width:0.5; cursor:pointer; transition:fill .15s; }
+  .country:hover { fill:#b3d4ff; }
+  .country.selected { fill:#4a90e2; }
+  #sidebar {
+    width:340px; max-width:40%; background:#fff; border-left:1px solid #e6e6e6;
+    box-shadow: -4px 0 12px rgba(0,0,0,0.06); padding:12px; overflow:auto;
+  }
+  #sidebar h2 { margin:6px 0 12px; font-size:18px; }
+  .art-list { display:flex; flex-wrap:wrap; gap:8px; }
+  .art-item { width:100%; display:flex; gap:8px; margin-bottom:10px; }
+  .thumb { width:96px; height:72px; object-fit:cover; border-radius:4px; cursor:pointer; }
+  .art-meta { flex:1; }
+  .btn-close { background:#eee; border:none; padding:6px 8px; border-radius:4px; cursor:pointer; }
+  .no-art { color:#666; padding:12px 0; }
+  /* modal */
+  #modal {
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background: rgba(0,0,0,0.6); z-index:30;
+  }
+  #modal .modal-inner { background:#fff; padding:12px; border-radius:6px; max-width:90%; max-height:90%; overflow:auto; }
+  #modal img { max-width:100%; height:auto; display:block; border-radius:4px; }
+  #tooltip {
+    position:absolute; pointer-events:none; background:rgba(0,0,0,0.75); color:#fff; padding:6px 8px; border-radius:4px; font-size:13px; display:none;
+  }
+  @media (max-width:800px){
+    #container { flex-direction:column; }
+    #sidebar { width:100%; max-height:45vh; border-left:none; border-top:1px solid #e6e6e6; }
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="map"><div id="tooltip"></div></div>
+  <aside id="sidebar">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2>请选择一个国家</h2>
+      <button id="clearBtn" class="btn-close">清除</button>
+    </div>
+    <div id="countryInfo">
+      <p class="no-art">点选地图上的国家以查看对应画作。</p>
+    </div>
+  </aside>
+</div>
+
+<div id="modal" aria-hidden="true">
+  <div class="modal-inner">
+    <button id="closeModal" class="btn-close" style="float:right">关闭</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- d3 v7 -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+/*
+  使用演示 GeoJSON（含国家名称）。如果未来需要离线、加速或更精确的属性，请换成其它 GeoJSON 文件。
+*/
+const geojsonUrl = 'https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json';
+
+/*
+  artworkData：把你的画作按国家代码或国家名挂到这里。
+  推荐用 ISO 3166-1 alpha-2（两字母）代码作为 key，例如 "JP","US","FR"。
+  也支持使用国家中文/英文名作为 key（示例中也包含了英文名备用）。
+  每个值是数组：{ title, url, year, desc } —— 你可以按需扩展字段。
+*/
+const artworkData = {
+  "JP": [
+    { title: "富士山之梦", url: "https://picsum.photos/id/1011/1200/800", year: 2024, desc: "以日本为灵感的油画。" },
+    { title: "都市夜景", url: "https://picsum.photos/id/1025/1200/800", year: 2023, desc: "现代城市氛围。" }
+  ],
+  "FR": [
+    { title: "巴黎光影", url: "https://picsum.photos/id/1003/1200/800", year: 2022, desc: "在法国创作的系列之一。" }
+  ],
+  "United States": [ /* 用英文名作为备用 key */ 
+    { title: "大地之色", url: "https://picsum.photos/id/1015/1200/800", year: 2021, desc: "与美国有关的题材。" }
+  ],
+  "CN": [
+    { title: "长城晨曦", url: "https://picsum.photos/id/1040/1200/800", year: 2020, desc: "描绘中国山川。" }
+  ]
+};
+
+const width = Math.max(700, window.innerWidth * 0.6);
+const height = Math.max(400, window.innerHeight);
+
+const svg = d3.select("#map").append("svg")
+  .attr("viewBox", `0 0 ${width} ${height}`)
+  .attr("preserveAspectRatio", "xMidYMid meet");
+
+const tooltip = d3.select("#tooltip");
+
+const projection = d3.geoMercator()
+  .scale((width / 2 / Math.PI) * 1.1)
+  .translate([width / 2, height / 1.8]);
+
+const path = d3.geoPath().projection(projection);
+
+let selectedCountryPath = null;
+
+d3.json(geojsonUrl).then(world => {
+  svg.append("g")
+    .selectAll("path")
+    .data(world.features)
+    .join("path")
+      .attr("class", "country")
+      .attr("d", path)
+      .on("mouseover", (event, d) => {
+         d3.select(event.currentTarget).raise();
+         tooltip.style("display","block").text(getCountryDisplayName(d));
+      })
+      .on("mousemove", (event) => {
+         tooltip.style("left", (event.pageX + 12) + "px")
+                .style("top", (event.pageY + 12) + "px");
+      })
+      .on("mouseout", () => {
+         tooltip.style("display","none");
+      })
+      .on("click", (event, d) => {
+         // remove previous selection
+         svg.selectAll(".country").classed("selected", false);
+         d3.select(event.currentTarget).classed("selected", true);
+         selectedCountryPath = event.currentTarget;
+         showArtworksForCountry(d);
+      });
+});
+
+/* 辅助：尽可能从 GeoJSON 获取 iso2（两字母），否则用 name */
+function getCountryKey(d){
+  // 尝试常见字段
+  const props = d.properties || {};
+  // 常见 GeoJSON 字段名：iso_a2, ISO_A2, iso2, adm0_a3_isなど。有些 GeoJSON 不包含 iso2。
+  const candidates = [props.iso_a2, props.ISO_A2, props.iso2, props.iso, props.ISO, props.ISO_A3, props.id];
+  for (const c of candidates){
+    if (c && typeof c === 'string' && c.trim().length>0){
+      // 如果是 alpha-3 (3字母)，不能保证匹配；示例尽量使用 alpha-2
+      return c.trim();
+    }
+  }
+  // fallback to name (英文)
+  if (props.name) return props.name;
+  if (props.NAME) return props.NAME;
+  // 最后尝试 feature.id 或者 feature.properties.ADMIN 等
+  if (d.id) return d.id;
+  if (props.ADMIN) return props.ADMIN;
+  return null;
+}
+function getCountryDisplayName(d){
+  const props = d.properties || {};
+  return props.name || props.NAME || props.ADMIN || getCountryKey
